@@ -7,35 +7,28 @@
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
 
-      // 1. 基础配置：开启增强型衡量
       gtag('config', 'G-D5YSD14H3P', {
           'send_page_view': true,
-          'page_title': 'Home - Super Deals Finds Spain'
+          'page_title': 'Amazon Global Finds - Deals & Coupons'
       });
 
-      // 2. 核心追踪函数
       const tracker = {
-          // 商品点击
           sendClick: (item, pos) => {
               gtag('event', 'select_item', {
-                  item_list_id: "main_list",
-                  item_list_name: "Homepage Feed",
+                  item_list_id: "amazon_list",
+                  item_list_name: "Amazon Deals Feed",
                   items: [{
-                      item_id: item.item_id,
-                      item_name: item.title,
-                      discount: item.discount_rate,
-                      price: item.discount_price,
-                      item_variant: pos // 记录点击位置：carousel, grid_img, grid_btn
+                      item_name: item.text_content,
+                      item_variant: pos,
+                      location_id: item.marketplace
                   }]
               });
           },
-          // 商品曝光 (当商品进入视口)
           sendImpression: (item) => {
               gtag('event', 'view_item', {
                   items: [{
-                      item_id: item.item_id,
-                      item_name: item.title,
-                      price: item.discount_price
+                      item_name: item.text_content,
+                      location_id: item.marketplace
                   }]
               });
           }
@@ -45,57 +38,62 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="referrer" content="no-referrer">
-    <title>Chollos AliExpress España | Super Deals Finds</title>
+    <title>Amazon Global Finds | Top Deals & Coupons</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .swiper { width: 100%; height: 380px; border-radius: 24px; margin-bottom: 40px; }
-        .swiper-slide { position: relative; background: #000; overflow: hidden; }
-        .price-gradient { background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%); }
-        #product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 2px solid #FF9900; }
+        .swiper { width: 100%; height: 350px; border-radius: 20px; margin-bottom: 30px; }
+        .swiper-slide { position: relative; background: #232f3e; overflow: hidden; }
+        /* 亚马逊橙色渐变 */
+        .amazon-gradient { background: linear-gradient(135deg, #FF9900 0%, #FFAC33 100%); }
+        #product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
         @media (min-width: 768px) { #product-grid { grid-template-columns: repeat(4, 1fr); } }
-        @media (min-width: 1280px) { #product-grid { grid-template-columns: repeat(5, 1fr); } }
-        .product-card { transition: all 0.3s ease; }
-        .fade-in { animation: fadeIn 0.5s ease forwards; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        #back-to-top { position: fixed; bottom: 30px; right: 20px; width: 45px; height: 45px; background: #ff416c; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 2000; opacity: 0; visibility: hidden; transition: all 0.3s; }
+        .product-card { transition: transform 0.2s ease; border: 1px solid #eee; }
+        .product-card:hover { transform: translateY(-5px); border-color: #FF9900; }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        #back-to-top { position: fixed; bottom: 30px; right: 20px; width: 45px; height: 45px; background: #232f3e; color: #FF9900; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2000; opacity: 0; visibility: hidden; transition: 0.3s; }
         #back-to-top.show { opacity: 1; visibility: visible; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans text-gray-900">
+<body class="bg-gray-100 font-sans text-gray-900">
 
     <nav class="glass-nav sticky top-0 z-[1000] px-4 py-3">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <i class="fa-solid fa-bolt text-red-600 text-2xl"></i>
-                <span class="text-xl font-black italic uppercase tracking-tighter">Super Deals <span class="text-red-600">Finds</span></span>
+                <i class="fa-brands fa-amazon text-[#FF9900] text-3xl"></i>
+                <span class="text-xl font-bold tracking-tight">Global <span class="text-[#FF9900]">Finds</span></span>
             </div>
-            <span id="stats" class="text-[10px] font-bold text-gray-400 bg-white border px-3 py-1 rounded-full italic uppercase tracking-widest">Calculando...</span>
+            <span id="stats" class="text-[10px] font-bold text-gray-500 bg-gray-100 px-3 py-1 rounded-md border">LOADING...</span>
         </div>
     </nav>
 
-    <main class="max-w-7xl mx-auto px-4 py-8">
+    <main class="max-w-7xl mx-auto px-4 py-6">
         <div id="carousel-container" class="hidden">
-            <div class="swiper mySwiper shadow-2xl">
+            <div class="swiper mySwiper shadow-lg">
                 <div class="swiper-wrapper" id="carousel-wrapper"></div>
                 <div class="swiper-pagination"></div>
             </div>
         </div>
 
-        <div class="flex items-center gap-4 mb-8">
-            <h2 class="text-2xl font-black italic tracking-tight uppercase">🔥 Chollos del Día</h2>
-            <div class="h-[1px] flex-grow bg-gray-200"></div>
+        <div class="flex items-center gap-4 mb-6">
+            <h2 class="text-lg font-bold uppercase tracking-wider flex items-center gap-2">
+                <span class="w-2 h-6 bg-[#FF9900] rounded-full"></span>
+                Amazon Today's Deals
+            </h2>
         </div>
         
         <div id="product-grid"></div>
-        <div id="sentinel" class="h-40 flex items-center justify-center"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600"></div></div>
+        <div id="sentinel" class="h-20 flex items-center justify-center">
+            <div class="animate-spin rounded-full h-6 w-6 border-b-2 border-[#FF9900]"></div>
+        </div>
     </main>
 
-    <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"><i class="fa-solid fa-arrow-up"></i></div>
+    <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"><i class="fa-solid fa-chevron-up"></i></div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
@@ -104,45 +102,45 @@
         let currentIndex = 0;
         const itemsPerPage = 20;
 
-        function formatPrice(price) { return parseFloat(price).toFixed(2); }
-
         async function init() {
             try {
-                const response = await fetch('wa_aliexpress_spain.json');
+                // 引用你的 amazondeals.json
+                const response = await fetch('amazondeals.json');
                 const data = await response.json();
                 
-                const topDeals = [...data].sort((a,b) => b.discount_rate - a.discount_rate).slice(0, 6);
-                renderCarousel(topDeals);
+                allProducts = data; // 保持原始排序或使用 .reverse() 看到最新
+                document.getElementById('stats').innerText = `${data.length} DEALS FOUND`;
 
-                allProducts = data.sort(() => Math.random() - 0.5);
-                document.getElementById('stats').innerText = `${data.length} PRODUCTOS`;
+                // 渲染顶部轮播（取前5个）
+                renderCarousel(allProducts.slice(0, 5));
 
-                // 懒加载 + 曝光统计
                 const observer = new IntersectionObserver((entries) => {
                     entries.forEach(entry => {
                         if (entry.isIntersecting) {
                             if (entry.target.id === 'sentinel') {
                                 loadMore();
                             } else {
-                                // 统计商品曝光
                                 const itemData = JSON.parse(entry.target.getAttribute('data-item'));
                                 tracker.sendImpression(itemData);
-                                observer.unobserve(entry.target); // 每个商品只统计一次曝光
+                                observer.unobserve(entry.target);
                             }
                         }
                     });
-                }, { rootMargin: '100px' });
+                }, { rootMargin: '150px' });
 
                 observer.observe(document.getElementById('sentinel'));
-                window.observer = observer; // 全局引用
+                window.observer = observer;
 
                 window.addEventListener('scroll', () => {
                     const btn = document.getElementById('back-to-top');
-                    if (window.scrollY > 800) btn.classList.add('show');
+                    if (window.scrollY > 600) btn.classList.add('show');
                     else btn.classList.remove('show');
                 });
 
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error("Error loading JSON:", err); 
+                document.getElementById('stats').innerText = "ERROR LOADING DATA";
+            }
         }
 
         function renderCarousel(topDeals) {
@@ -150,61 +148,56 @@
             document.getElementById('carousel-container').classList.remove('hidden');
             wrapper.innerHTML = topDeals.map(item => `
                 <div class="swiper-slide">
-                    <img src="${item.item_main_pic}" class="absolute inset-0 w-full h-full object-cover blur-3xl opacity-40">
-                    <div class="relative z-10 flex flex-col md:flex-row items-center h-full p-8 md:p-16 gap-8 text-white">
-                        <img src="${item.item_main_pic}" class="h-48 w-48 md:h-72 md:w-72 rounded-3xl shadow-2xl object-cover border-4 border-white/10">
-                        <div class="flex-1 text-center md:text-left">
-                            <span class="bg-red-600 px-3 py-1 rounded-full text-[10px] font-bold mb-4 inline-block">-${item.discount_rate}%</span>
-                            <h3 class="text-2xl md:text-4xl font-black mb-4 line-clamp-2">${item.title}</h3>
-                            <div class="text-4xl md:text-6xl font-black text-yellow-400 mb-6">€${formatPrice(item.discount_price)}</div>
-                            <a href="${item.affiliate_short_link}" 
+                    <div class="absolute inset-0 bg-gradient-to-r from-black to-transparent z-10 opacity-60"></div>
+                    <img src="${item.item_main_pic}" class="absolute inset-0 w-full h-full object-cover blur-sm">
+                    <div class="relative z-20 flex items-center h-full p-6 md:p-12 gap-6 text-white">
+                        <img src="${item.item_main_pic}" class="h-32 w-32 md:h-52 md:w-52 rounded-lg shadow-2xl object-cover bg-white">
+                        <div class="flex-1">
+                            <span class="bg-[#FF9900] text-black text-[10px] font-bold px-2 py-1 rounded mb-2 inline-block">HOT DEAL</span>
+                            <h3 class="text-lg md:text-2xl font-bold mb-3 line-clamp-2">${item.text_content}</h3>
+                            <a href="${item.affiliate_link}" 
                                onclick='tracker.sendClick(${JSON.stringify(item).replace(/'/g, "&apos;")}, "carousel")'
-                               target="_blank" class="inline-block px-12 py-4 bg-white text-red-600 font-black rounded-full shadow-xl">COMPRAR</a>
+                               target="_blank" class="inline-block px-8 py-3 amazon-gradient text-black font-bold rounded-md shadow-lg">View on Amazon</a>
                         </div>
                     </div>
                 </div>
             `).join('');
-            new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4500 }, pagination: { el: ".swiper-pagination", clickable: true } });
+            new Swiper(".mySwiper", { loop: true, autoplay: { delay: 4000 }, pagination: { el: ".swiper-pagination", clickable: true } });
         }
 
         function loadMore() {
             const grid = document.getElementById('product-grid');
             const batch = allProducts.slice(currentIndex, currentIndex + itemsPerPage);
+            
             if (batch.length === 0) {
-                document.getElementById('sentinel').innerHTML = "<p class='text-gray-400 text-xs font-bold py-10'>FIN DE SELECCIÓN</p>";
+                document.getElementById('sentinel').innerHTML = "<p class='text-gray-400 text-sm font-bold py-10'>No more deals today!</p>";
                 return;
             }
 
             batch.forEach(item => {
-                const stars = Math.round(item.comment_score || 0);
                 const card = document.createElement('div');
-                card.className = "product-card bg-white rounded-3xl overflow-hidden shadow-sm flex flex-col fade-in border border-gray-100";
-                card.setAttribute('data-item', JSON.stringify(item)); // 用于曝光统计
+                card.className = "product-card bg-white rounded-xl overflow-hidden shadow-sm flex flex-col fade-in";
+                card.setAttribute('data-item', JSON.stringify(item));
                 
                 card.innerHTML = `
-                    <a href="${item.affiliate_short_link}" onclick='tracker.sendClick(${JSON.stringify(item).replace(/'/g, "&apos;")}, "grid_image")' target="_blank" class="block relative aspect-square bg-gray-50">
-                        <img src="${item.item_main_pic}" loading="lazy" class="absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity" onload="this.style.opacity='1'">
-                        <div class="absolute top-3 left-3 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md">-${item.discount_rate}%</div>
+                    <a href="${item.affiliate_link}" onclick='tracker.sendClick(${JSON.stringify(item).replace(/'/g, "&apos;")}, "grid_img")' target="_blank" class="block relative aspect-square">
+                        <img src="${item.item_main_pic}" loading="lazy" class="absolute inset-0 w-full h-full object-contain p-2 transition-opacity duration-300" onload="this.style.opacity='1'">
+                        <div class="absolute top-2 right-2 bg-gray-800/80 text-white text-[9px] font-bold px-1.5 py-0.5 rounded">${item.marketplace || 'Global'}</div>
                     </a>
-                    <div class="p-4 flex flex-col flex-grow">
-                        <h3 class="text-[11px] font-bold line-clamp-2 h-8 mb-2 leading-tight">${item.title}</h3>
-                        <div class="flex items-center gap-1 mb-3">
-                            ${Array(5).fill(0).map((_, i) => `<i class="fa-solid fa-star text-[8px] ${i < stars ? 'text-yellow-400' : 'text-gray-100'}"></i>`).join('')}
-                            <span class="text-[9px] text-gray-300 font-bold ml-1 uppercase tracking-tighter">${item.comment_30d || 0}+ vtas</span>
-                        </div>
-                        <div class="mt-auto flex items-end justify-between">
-                            <div>
-                                <div class="text-[10px] text-gray-400 line-through italic font-mono leading-none">€${formatPrice(item.origin_price)}</div>
-                                <div class="text-xl font-black text-red-600 leading-none mt-1 font-mono">€${formatPrice(item.discount_price)}</div>
-                            </div>
-                            <a href="${item.affiliate_short_link}" onclick='tracker.sendClick(${JSON.stringify(item).replace(/'/g, "&apos;")}, "grid_btn")' target="_blank" class="h-9 w-9 price-gradient text-white flex items-center justify-center rounded-2xl shadow-lg hover:rotate-12 transition-transform">
-                                <i class="fa-solid fa-arrow-right text-xs"></i>
+                    <div class="p-3 flex flex-col flex-grow">
+                        <h3 class="text-xs font-medium line-clamp-3 h-12 mb-3 leading-snug text-gray-800">${item.text_content}</h3>
+                        <div class="mt-auto">
+                            <a href="${item.affiliate_link}" 
+                               onclick='tracker.sendClick(${JSON.stringify(item).replace(/'/g, "&apos;")}, "grid_btn")' 
+                               target="_blank" 
+                               class="w-full py-2 amazon-gradient text-black text-xs font-bold rounded-md shadow flex items-center justify-center gap-2 active:scale-95 transition-transform">
+                               Shop Now
                             </a>
                         </div>
                     </div>
                 `;
                 grid.appendChild(card);
-                window.observer.observe(card); // 开启对此卡片的曝光监听
+                window.observer.observe(card);
             });
             currentIndex += itemsPerPage;
         }
@@ -213,4 +206,3 @@
     </script>
 </body>
 </html>
-
