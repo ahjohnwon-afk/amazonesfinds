@@ -22,107 +22,99 @@
 
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Global Finds - Top Deals & Picks</title>
+    <title>Global Finds - Personalized Shopping Guide</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     
     <style>
-        .glass-nav { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(12px); border-bottom: 2px solid #FF9900; }
+        /* 修改色调：避开 Amazon 品牌深蓝色 #232f3e，改用更中性的深灰蓝 */
+        :root { --main-dark: #1a202c; --accent-orange: #f6ad55; }
+        .glass-nav { background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(12px); border-bottom: 2px solid var(--accent-orange); }
         .swiper { width: 100%; height: 350px; border-radius: 20px; margin-bottom: 30px; }
-        .swiper-slide { position: relative; background: #232f3e; }
-        .amazon-gradient { background: linear-gradient(135deg, #FF9900 0%, #FFAC33 100%); }
+        .swiper-slide { position: relative; background: var(--main-dark); }
+        .brand-gradient { background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%); }
         #product-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
         @media (min-width: 768px) { #product-grid { grid-template-columns: repeat(4, 1fr); gap: 20px; } }
         @media (min-width: 1280px) { #product-grid { grid-template-columns: repeat(5, 1fr); } }
-        .product-card { transition: all 0.3s; border: 1px solid #eee; background: white; }
+        .product-card { transition: all 0.3s; border: 1px solid #edf2f7; background: white; border-radius: 12px; }
         .fade-in { animation: fadeIn 0.5s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* 市场按钮样式 */
-        .market-btn { cursor: pointer; transition: all 0.2s; border: 1px solid #ddd; }
-        .market-btn.active { background: #232f3e; color: #FF9900; border-color: #232f3e; }
-
-        /* Banner 样式 */
-        .aliexpress-banner { background: linear-gradient(90deg, #FF9900 0%, #FFAC33 100%); color: #232f3e; text-align: center; padding: 12px 0; overflow: hidden; position: relative; z-index: 900; margin-top: -2px; border-bottom-left-radius: 15px; border-bottom-right-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+        .market-btn { cursor: pointer; transition: all 0.2s; border: 1px solid #ddd; background: #fff; }
+        .market-btn.active { background: var(--main-dark); color: var(--accent-orange); border-color: var(--main-dark); }
         
-        footer { background: #232f3e; color: #999; padding: 40px 20px; font-size: 12px; line-height: 1.6; }
-
-        #back-to-top { position: fixed; bottom: 30px; right: 20px; width: 45px; height: 45px; background: #232f3e; color: #FF9900; border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 2000; }
+        footer { background: var(--main-dark); color: #a0aec0; padding: 60px 20px; font-size: 13px; line-height: 1.8; }
+        #back-to-top { position: fixed; bottom: 30px; right: 20px; width: 45px; height: 45px; background: var(--main-dark); color: var(--accent-orange); border-radius: 50%; display: flex; align-items: center; justify-content: center; opacity: 0; visibility: hidden; transition: 0.3s; z-index: 2000; }
         #back-to-top.show { opacity: 1; visibility: visible; }
     </style>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-slate-50 font-sans text-slate-900">
 
-    <div class="bg-gray-800 text-white text-[10px] py-1 text-center px-4 uppercase tracking-wider">
-        As an Amazon Associate I earn from qualifying purchases. | Como Afiliado de Amazon, percibo ingresos por compras adscritas.
+    <div class="bg-slate-800 text-slate-300 text-[10px] py-1.5 text-center px-4 tracking-tight">
+        AS AN ASSOCIATE, I EARN FROM QUALIFYING PURCHASES. | COMO AFILIADO, PERCIBO INGRESOS POR COMPRAS ADSCRITAS.
     </div>
 
     <nav class="glass-nav sticky top-0 z-[1000] px-4 py-3">
         <div class="max-w-7xl mx-auto flex justify-between items-center">
             <div class="flex items-center gap-2">
-                <i class="fa-brands fa-amazon text-[#FF9900] text-3xl"></i>
-                <span class="text-xl font-bold hidden sm:inline">Global <span class="text-[#FF9900]">Finds</span></span>
+                <i class="fa-solid fa-bag-shopping text-orange-400 text-2xl"></i>
+                <span class="text-xl font-extrabold tracking-tight">GLOBAL<span class="text-orange-500">FINDS</span></span>
             </div>
             
-            <div class="flex items-center gap-1 bg-gray-100 p-1 rounded-lg">
-                <button onclick="switchMarket('es')" id="btn-es" class="market-btn px-3 py-1 rounded-md text-[10px] font-black uppercase">ES</button>
-                <button onclick="switchMarket('us')" id="btn-us" class="market-btn px-3 py-1 rounded-md text-[10px] font-black uppercase">US</button>
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                <button onclick="switchMarket('es')" id="btn-es" class="market-btn px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase">Spain</button>
+                <button onclick="switchMarket('us')" id="btn-us" class="market-btn px-4 py-1.5 rounded-lg text-[11px] font-bold uppercase">Global</button>
             </div>
         </div>
     </nav>
 
-    <a href="https://ali.esfinds.com" target="_blank" class="block transition-all duration-200">
-        <div class="aliexpress-banner">
-            <div class="max-w-7xl mx-auto flex items-center justify-center gap-2">
-                <img src="https://img.alicdn.com/imgextra/i4/O1CN01k04Q8l1f93f0b2G7B_!!6000000003943-2-tps-100-100.png" class="h-6 w-auto" alt="AliExpress">
-                <span class="text-sm sm:text-base font-bold underline">Discover Best Sellers on AliExpress!</span>
-            </div>
-        </div>
-    </a>
-
-    <main class="max-w-7xl mx-auto px-4 py-6">
-        <div id="search-hint" class="text-[11px] text-gray-500 mb-4 flex items-center gap-2 italic bg-white p-2 rounded border border-dashed border-gray-300">
-            <i class="fa-solid fa-circle-info text-[#FF9900]"></i>
-            <span id="hint-text">Si el link falla, busca en / If link fails, search at: <b>esfinds.com</b></span>
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div id="search-hint" class="text-[11px] text-slate-500 mb-6 flex items-center gap-3 italic bg-white p-3 rounded-xl shadow-sm border border-slate-200">
+            <i class="fa-solid fa-magnifying-glass text-orange-400"></i>
+            <span id="hint-text">Si el enlace no carga, busque el producto en: <b>esfinds.com</b></span>
         </div>
 
-        <div id="carousel-container" class="hidden"><div class="swiper mySwiper shadow-lg"><div class="swiper-wrapper" id="carousel-wrapper"></div><div class="swiper-pagination"></div></div></div>
+        <div id="carousel-container" class="hidden"><div class="swiper mySwiper shadow-xl"><div class="swiper-wrapper" id="carousel-wrapper"></div><div class="swiper-pagination"></div></div></div>
         
-        <div class="flex items-center justify-between mb-6 mt-4"> 
-            <h2 class="text-lg font-bold uppercase tracking-wider flex items-center gap-2">
-                <span class="w-2 h-6 bg-[#FF9900] rounded-full"></span>
-                <span id="market-title">Deals</span>
+        <div class="flex items-center justify-between mb-8 mt-4"> 
+            <h2 class="text-xl font-black uppercase tracking-tighter flex items-center gap-2">
+                <span class="w-1.5 h-8 bg-orange-500 rounded-full"></span>
+                <span id="market-title">Selected Picks</span>
             </h2>
-            <span id="stats" class="text-[10px] font-bold text-gray-400 uppercase">Checking Stock...</span>
+            <span id="stats" class="text-[10px] font-bold text-slate-400 bg-slate-200 px-2 py-1 rounded">SYNCING...</span>
         </div>
 
         <div id="product-grid"></div>
-        <div id="sentinel" class="py-12 flex flex-col items-center justify-center">
-            <div id="loader" class="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF9900]"></div>
-            <p id="end-msg" class="hidden text-gray-400 text-sm italic text-center">
-                ✨ No more deals found for this region.<br>
-                <small class="block mt-2">Prices and availability are accurate as of the date/time indicated and are subject to change.</small>
-            </p>
+        
+        <div id="sentinel" class="py-16 flex flex-col items-center justify-center">
+            <div id="loader" class="animate-spin rounded-full h-10 w-10 border-b-2 border-orange-500"></div>
+            <div id="end-msg" class="hidden text-slate-400 text-sm text-center max-w-md">
+                <p class="font-medium">✨ All current recommendations loaded.</p>
+                <p class="mt-2 text-[11px] leading-relaxed">Product prices and availability are accurate as of the date/time indicated and are subject to change. Any price and availability information displayed on the relevant Store at the time of purchase will apply to the purchase of this product.</p>
+            </div>
         </div>
     </main>
 
     <footer>
-        <div class="max-w-7xl mx-auto">
-            <p class="mb-4">
-                <strong>Legal Disclaimer:</strong> Global Finds is a participant in the Amazon Services LLC Associates Program and Amazon EU Associates Programme, an affiliate advertising program designed to provide a means for sites to earn advertising fees by advertising and linking to Amazon.com and Amazon.es.
-            </p>
-            <p class="mb-4">
-                <strong>Aviso Legal:</strong> Global Finds participa en el Programa de Afiliados de Amazon de la UE, un programa de publicidad para afiliados diseñado para ofrecer a sitios web un modo de obtener comisiones por publicidad, publicitando e incluyendo enlaces a Amazon.es.
-            </p>
-            <p class="text-center pt-6 border-t border-gray-700">
-                &copy; 2025 Global Finds | esfinds.com
-            </p>
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div class="space-y-4">
+                <h4 class="text-white font-bold text-lg">About Global Finds</h4>
+                <p>We provide a curated selection of products to help users find the best deals across various marketplaces. Our mission is to simplify your shopping experience with high-quality insights.</p>
+            </div>
+            <div class="space-y-4">
+                <h4 class="text-white font-bold text-lg">Affiliate Disclosure</h4>
+                <p>Global Finds participates in various affiliate marketing programs, which means we may get paid commissions on editorially chosen products purchased through our links to retailer sites.</p>
+                <p><strong>Aviso:</strong> Este sitio web participa en programas de afiliación, lo que nos permite obtener una comisión por las compras realizadas a través de nuestros enlaces.</p>
+            </div>
+        </div>
+        <div class="max-w-7xl mx-auto pt-10 mt-10 border-t border-slate-700 text-center text-slate-500">
+            &copy; 2025 ESFINDS.COM | All Rights Reserved.
         </div>
     </footer>
 
-    <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"><i class="fa-solid fa-chevron-up"></i></div>
+    <div id="back-to-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})"><i class="fa-solid fa-arrow-up"></i></div>
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
 
@@ -137,12 +129,10 @@
             document.querySelectorAll('.market-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`btn-${marketCode}`).classList.add('active');
             
-            // 根据市场切换搜索提示文字（可选，目前已做成双语并存）
-            const hint = document.getElementById('hint-text');
             if(marketCode === 'es') {
-                document.getElementById('market-title').innerText = `Ofertas en España`;
+                document.getElementById('market-title').innerText = `Selección España`;
             } else {
-                document.getElementById('market-title').innerText = `US Hot Deals`;
+                document.getElementById('market-title').innerText = `Selected Global Picks`;
             }
 
             filteredProducts = allProducts.filter(item => 
@@ -153,7 +143,7 @@
             document.getElementById('product-grid').innerHTML = '';
             document.getElementById('loader').classList.remove('hidden');
             document.getElementById('end-msg').classList.add('hidden');
-            document.getElementById('stats').innerText = `${filteredProducts.length} PRODUCTS`;
+            document.getElementById('stats').innerText = `${filteredProducts.length} ITEMS`;
 
             renderCarousel(filteredProducts.slice(0, 5));
             loadMore();
@@ -165,7 +155,7 @@
                 const browserLang = (navigator.language || navigator.userLanguage).toLowerCase();
                 const defaultMarket = browserLang.startsWith('es') ? 'es' : 'us';
 
-                // 请确保 JSON 文件已重命名为 products_data.json
+                // 请务必将文件名改为 products_data.json
                 const response = await fetch('products_data.json');
                 const data = await response.json();
 
@@ -203,14 +193,14 @@
             container.classList.remove('hidden');
             wrapper.innerHTML = topDeals.map(item => `
                 <div class="swiper-slide">
-                    <div class="absolute inset-0 bg-gradient-to-r from-black/70 to-transparent z-10"></div>
-                    <img src="${item.item_main_pic}" class="absolute inset-0 w-full h-full object-cover blur-md opacity-50">
-                    <div class="relative z-20 flex items-center h-full p-6 gap-6 text-white">
-                        <img src="${item.item_main_pic}" class="h-32 w-32 md:h-52 md:w-52 rounded-xl object-contain bg-white p-2">
+                    <div class="absolute inset-0 bg-gradient-to-r from-black/80 to-transparent z-10"></div>
+                    <img src="${item.item_main_pic}" class="absolute inset-0 w-full h-full object-cover blur-sm opacity-40">
+                    <div class="relative z-20 flex items-center h-full p-8 gap-8 text-white">
+                        <img src="${item.item_main_pic}" class="h-32 w-32 md:h-52 md:w-52 rounded-2xl object-contain bg-white p-4 shadow-2xl">
                         <div class="flex-1">
-                            <span class="bg-[#FF9900] text-black text-[10px] font-black px-2 py-1 rounded mb-2 inline-block">AMAZON ${item.marketplace.toUpperCase()}</span>
-                            <h3 class="text-lg md:text-2xl font-bold mb-3 line-clamp-2">${item.text_content}</h3>
-                            <a href="${item.affiliate_link}" target="_blank" class="inline-block px-8 py-3 amazon-gradient text-black font-bold rounded-lg shadow-md">Check Price on Amazon</a>
+                            <span class="bg-orange-500 text-white text-[10px] font-bold px-3 py-1 rounded-full mb-3 inline-block">HOT PICK</span>
+                            <h3 class="text-xl md:text-3xl font-bold mb-4 line-clamp-2 leading-tight">${item.text_content}</h3>
+                            <a href="${item.affiliate_link}" target="_blank" class="inline-block px-10 py-4 brand-gradient text-white font-bold rounded-xl shadow-lg hover:scale-105 transition-transform">View Product</a>
                         </div>
                     </div>
                 </div>
@@ -229,18 +219,17 @@
             }
             batch.forEach(item => {
                 const card = document.createElement('div');
-                card.className = "product-card rounded-xl overflow-hidden shadow-sm flex flex-col fade-in";
+                card.className = "product-card shadow-sm hover:shadow-md transition-shadow flex flex-col fade-in";
                 card.setAttribute('data-item', JSON.stringify(item));
                 card.innerHTML = `
-                    <a href="${item.affiliate_link}" onclick='tracker.sendClick(${JSON.stringify(item).replace(/'/g, "&apos;")}, "grid_img")' target="_blank" class="block relative aspect-square bg-white">
-                        <img src="${item.item_main_pic}" loading="lazy" class="absolute inset-0 w-full h-full object-contain p-3 opacity-0 transition-opacity" onload="this.style.opacity='1'">
+                    <a href="${item.affiliate_link}" onclick='tracker.sendClick(${JSON.stringify(item).replace(/'/g, "&apos;")}, "grid_img")' target="_blank" class="block relative aspect-square bg-white rounded-t-xl overflow-hidden">
+                        <img src="${item.item_main_pic}" loading="lazy" class="absolute inset-0 w-full h-full object-contain p-4 opacity-0 transition-opacity" onload="this.style.opacity='1'">
                     </a>
-                    <div class="p-3 flex flex-col flex-grow">
-                        <h3 class="text-xs font-semibold line-clamp-3 h-12 mb-4 text-gray-800 leading-snug">${item.text_content}</h3>
+                    <div class="p-4 flex flex-col flex-grow">
+                        <h3 class="text-[13px] font-bold line-clamp-3 h-14 mb-4 text-slate-800 leading-snug">${item.text_content}</h3>
                         <div class="mt-auto">
-                            <p class="text-[9px] text-gray-400 mb-2 italic">*Prices on Amazon site may vary</p>
-                            <a href="${item.affiliate_link}" target="_blank" class="w-full py-2.5 amazon-gradient text-black text-xs font-bold rounded-lg flex items-center justify-center gap-2">
-                                Buy on Amazon <i class="fa-solid fa-angle-right text-[10px]"></i>
+                            <a href="${item.affiliate_link}" target="_blank" class="w-full py-3 bg-slate-800 text-orange-400 text-xs font-bold rounded-xl flex items-center justify-center gap-2 hover:bg-slate-700 transition-colors">
+                                Check Online <i class="fa-solid fa-external-link text-[10px]"></i>
                             </a>
                         </div>
                     </div>
