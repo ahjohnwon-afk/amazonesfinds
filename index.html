@@ -442,16 +442,12 @@ function appendNextBatch(){
       </div>
       <div class="p-4 flex flex-col gap-2">
         <h3 class="text-sm font-bold leading-snug line-clamp-3 min-h-[3.6em]">${p.title || ""}</h3>
+${isPromoCode?`
+  <div class="flex items-center justify-between">
+    <span class="promo-chip">🎟️ Promo Code</span>
+  </div>
+`:""}
 
-        ${isPromoCode?`
-          <div class="flex items-center justify-between">
-            <span class="promo-chip">🎟️ Promo Code</span>
-            <span class="text-[10px] font-black text-slate-400">${(p.marketplace||"").toUpperCase()}</span>
-          </div>
-        `:`<div class="flex items-center justify-end">
-            <span class="text-[10px] font-black text-slate-400">${(p.marketplace||"").toUpperCase()}</span>
-          </div>`
-        }
 
         <div class="flex justify-between items-center mt-auto">
           <span class="price">${cur}${formatPrice(p.price_discount)}</span>
