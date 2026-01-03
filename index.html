@@ -28,9 +28,7 @@
 .dot-active{width:24px!important;background:var(--accent)!important;border-radius:4px}
 
 /* debug */
-.debug-box{position:fixed;right:14px;bottom:14px;z-index:9999;background:#0b1220;color:#e5e7eb;border:1px solid rgba(255,255,255,.12);border-radius:14px;padding:10px 12px;min-width:260px;box-shadow:0 12px 30px rgba(0,0,0,.25)}
-.debug-box small{color:#94a3b8}
-.debug-box code{color:#fdba74}
+/* ✅ 已按你要求删除 debug（样式保留为注释占位，不影响其它逻辑） */
 </style>
 </head>
 
@@ -71,7 +69,7 @@
     </div>
 
     <div id="promo-empty" class="hidden border border-slate-200 bg-white rounded-2xl p-6 text-sm text-slate-600">
-      暂无可用 Promo（可能是日期格式解析失败或全部不在有效期）。请看右下角 Debug 信息。
+      暂无可用 Promo（可能是日期格式解析失败或全部不在有效期）。
     </div>
 
     <div id="promo-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>
@@ -91,26 +89,36 @@
 
 </main>
 
-<!-- DEBUG -->
-<div class="debug-box" id="debugBox">
-  <div class="flex items-center justify-between gap-3">
-    <div class="font-extrabold">Debug</div>
-    <button id="debugToggle" class="text-[11px] px-2 py-1 rounded-lg bg-white/10 hover:bg-white/15">Hide</button>
-  </div>
-  <div id="debugBody" class="mt-2 text-[12px] leading-5">
-    <div>Products: <code id="dbgProducts">0</code></div>
-    <div>Promos loaded: <code id="dbgPromos">0</code></div>
-    <div>Promos active: <code id="dbgPromosActive">0</code></div>
-    <div>Invalid date promos: <code id="dbgInvalid">0</code></div>
-    <small id="dbgHint"></small>
-  </div>
-</div>
-
 <script>
 /* ================= CONFIG ================= */
-const TRACK_ID = "site_esfinds-20";
+// ✅ 你要求：TRACK_ID 不带尾椎，尾椎由 marketplace 决定
+const TRACK_ID = "site_esfinds";
 const PRODUCT_URL = "products_data_v.json";
 const PROMO_URL   = "promo_codes.json";
+
+// ✅ marketplace => domain / tag suffix
+const AMAZON_DOMAIN_MAP = {
+  US: "amazon.com",
+  CA: "amazon.ca",
+  ES: "amazon.es",
+  DE: "amazon.de",
+  FR: "amazon.fr",
+  IT: "amazon.it",
+  UK: "amazon.co.uk",
+  GB: "amazon.co.uk",
+  JP: "amazon.co.jp"
+};
+const AMAZON_TAG_SUFFIX_MAP = {
+  US: "-20",
+  CA: "-20",
+  ES: "-21",
+  DE: "-21",
+  FR: "-21",
+  IT: "-21",
+  UK: "-21",
+  GB: "-21",
+  JP: "-22"
+};
 
 /* ================= DOM ================= */
 const promoSection = document.getElementById("promo-section");
@@ -118,13 +126,6 @@ const dealSection  = document.getElementById("deal-section");
 const tabDeals     = document.getElementById("tabDeals");
 const tabPromo     = document.getElementById("tabPromo");
 const promoEmpty   = document.getElementById("promo-empty");
-
-/* DEBUG DOM */
-const dbgProducts = document.getElementById("dbgProducts");
-const dbgPromos = document.getElementById("dbgPromos");
-const dbgPromosActive = document.getElementById("dbgPromosActive");
-const dbgInvalid = document.getElementById("dbgInvalid");
-const dbgHint = document.getElementById("dbgHint");
 
 /* ================= STATE ================= */
 let allProducts = [];
@@ -135,9 +136,26 @@ let promoPage = 0;
 const PROMOS_PER_PAGE = 3;
 
 /* ================= UTILS ================= */
+// ✅ 你要求：
+// 1) 如果 json 里有 affiliate_link，就直接用
+// 2) 否则根据 marketplace 选择域名
+// 3) tag 尾椎根据 marketplace：US -20 / ES -21 ...
+// ⚠️ 为了不改你现有调用（buildLink(p.asin)），我保持签名 buildLink(asin)
+//    但内部会从 allProducts 找到对应商品对象来取 marketplace / affiliate_link
 function buildLink(asin){
-  return `https://www.amazon.com/dp/${asin}?tag=${TRACK_ID}`;
+  const p = allProducts.find(x => (x.asin || "") === asin);
+
+  // 1) 优先 affiliate_link
+  if (p && p.affiliate_link) return p.affiliate_link;
+
+  // 2) marketplace => domain / suffix
+  const mp = ((p && p.marketplace) ? p.marketplace : "US").toUpperCase();
+  const domain = AMAZON_DOMAIN_MAP[mp] || "amazon.com";
+  const suffix = AMAZON_TAG_SUFFIX_MAP[mp] || "-20";
+
+  return `https://www.${domain}/dp/${asin}?tag=${TRACK_ID}${suffix}`;
 }
+
 function now(){ return new Date(); }
 function formatPrice(v){ return Number(v||0).toFixed(2); }
 function formatRating(v){ return v ? Number(v).toFixed(1) : "N/A"; }
@@ -279,7 +297,9 @@ function copyAndGo(p){
         return;
       }
     }
-    window.open("https://www.amazon.com/?tag="+TRACK_ID, "_blank");
+
+    // 默认回退 US 首页
+    window.open("https://www.amazon.com/?tag="+TRACK_ID+(AMAZON_TAG_SUFFIX_MAP["US"]||"-20"), "_blank");
   }, 350);
 }
 
@@ -300,7 +320,14 @@ function renderProducts(){
     : allProducts.filter(p=>p.category_name === currentCategory);
 
   list.map(p=>({...p,_s:scoreProduct(p)}))
-    .sort((a,b)=>b._s-a._s)
+    .sort((a,b)=>{
+      // ✅ ES 商品优先展示
+      const aMp = (a.marketplace || "").toUpperCase();
+      const bMp = (b.marketplace || "").toUpperCase();
+      if (aMp === "ES" && bMp !== "ES") return -1;
+      if (aMp !== "ES" && bMp === "ES") return 1;
+      return b._s-a._s;
+    })
     .slice(0,60)
     .forEach(p=>{
       const d=document.createElement("div");
@@ -335,19 +362,6 @@ function renderCategorySelect(cats){
   sel.onchange=()=>{currentCategory=sel.value;renderProducts();}
 }
 
-/* ================= DEBUG ================= */
-function setDebug(productsCount, promosLoaded, promosActive, invalidCount, hint){
-  dbgProducts.innerText = String(productsCount);
-  dbgPromos.innerText = String(promosLoaded);
-  dbgPromosActive.innerText = String(promosActive);
-  dbgInvalid.innerText = String(invalidCount);
-  dbgHint.innerText = hint || "";
-}
-
-document.getElementById("debugToggle").onclick = () => {
-  const body = document.getElementById("debugBody");
-  body.classList.toggle("hidden");
-};
 // ✅ FIX: parse Amazon raw_text time like "Jan 02, 2026 at 10:00 PM PST"
 function parseAmazonRawDate(raw, type){
   if(!raw) return null;
@@ -367,7 +381,7 @@ function parseAmazonRawDate(raw, type){
 
 /* ================= INIT ================= */
 async function init(){
-    try{ 
+    try{
       allPromosRaw = allPromosRaw.map(p=>{
       if(!p.category && p.raw_text){
         p.category = p.raw_text.split("\n")[0].trim();
@@ -393,14 +407,6 @@ async function init(){
       return isPromoActive(p);
     });
 
-    setDebug(
-      allProducts.length,
-      allPromosRaw.length,
-      allPromosActive.length,
-      invalidCount,
-      "如果 Promos loaded > 0 但 Promos active = 0，八成是日期格式/时区问题（看 Invalid date promos 数量）。"
-    );
-
     // 3) Promo Tab 永远显示（不再隐藏）
     //    但如果 active 为空，就显示 empty 提示
     renderPromoCategories(allPromosRaw.length ? allPromosRaw : allPromosActive);
@@ -413,7 +419,6 @@ async function init(){
 
   }catch(e){
     console.error(e);
-    setDebug(0,0,0,0, "加载失败：请打开控制台看 Network 是否 404 / 被缓存 / 路径不对。");
     // 让用户还能看见 tab
     tabPromo.click();
     promoEmpty.classList.remove("hidden");
