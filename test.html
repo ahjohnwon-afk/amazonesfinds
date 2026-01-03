@@ -1,7 +1,7 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="en">
 <head>
-  <!-- GA -->
+  <!-- Google Analytics -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-D5YSD14H3P"></script>
   <script>
     window.dataLayer = window.dataLayer || [];
@@ -12,52 +12,129 @@
 
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>ES Finds – Mejores Ofertas de Amazon</title>
+  <title>Global Finds – Best Amazon Deals Worldwide</title>
+  <meta name="description" content="Discover the best Amazon deals worldwide. Updated daily with verified discounts, promo codes, and instant coupons."/>
 
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
 
-<style>
-:root{--dark:#111827;--accent:#f97316;--soft:#ffedd5}
-.product-card{border:1px solid #e5e7eb;border-radius:16px;overflow:hidden;background:#fff;transition:.25s}
-.product-card:hover{transform:translateY(-4px);box-shadow:0 12px 30px rgba(0,0,0,.08)}
-.badge{position:absolute;top:10px;left:10px;background:var(--accent);color:#fff;font-size:11px;font-weight:800;padding:4px 8px;border-radius:999px}
-.badge-right{right:10px;left:auto;background:#000;font-size:10px}
-.cta{background:var(--dark);color:var(--accent);font-weight:800;padding:10px;border-radius:10px;text-align:center}
-.price{background:var(--soft);color:#9a3412;font-size:12px;font-weight:700;padding:4px 8px;border-radius:8px}
-</style>
+  <style>
+    :root{
+      --dark:#111827;
+      --accent:#f97316;
+      --soft:#ffedd5;
+    }
+
+    .product-card{
+      border:1px solid #e5e7eb;
+      border-radius:16px;
+      overflow:hidden;
+      background:#fff;
+      transition:.25s;
+    }
+    .product-card:hover{
+      transform:translateY(-4px);
+      box-shadow:0 12px 30px rgba(0,0,0,.08);
+    }
+
+    .badge{
+      position:absolute;
+      top:10px;
+      left:10px;
+      background:var(--accent);
+      color:#fff;
+      font-size:11px;
+      font-weight:800;
+      padding:4px 8px;
+      border-radius:999px;
+    }
+    .badge-right{
+      right:10px;
+      left:auto;
+      background:#000;
+      font-size:10px;
+    }
+
+    .cta{
+      background:var(--dark);
+      color:var(--accent);
+      font-weight:800;
+      padding:10px;
+      border-radius:10px;
+      text-align:center;
+      transition:.2s;
+    }
+    .cta:hover{
+      background:#000;
+    }
+
+    .price{
+      background:var(--soft);
+      color:#9a3412;
+      font-size:12px;
+      font-weight:700;
+      padding:4px 8px;
+      border-radius:8px;
+    }
+  </style>
 </head>
 
-<body class="bg-slate-50">
+<body class="bg-slate-50 text-slate-900">
 
+<!-- Affiliate disclosure -->
 <div class="bg-slate-800 text-slate-300 text-[10px] py-1 text-center">
-  Como afiliado de Amazon, obtengo ingresos por compras adscritas.
+  As an Amazon Associate, we earn from qualifying purchases.
 </div>
 
+<!-- Header -->
 <nav class="bg-white border-b px-4 py-3 sticky top-0 z-50">
   <div class="max-w-7xl mx-auto flex items-center gap-2">
     <i class="fa-solid fa-bag-shopping text-orange-500 text-2xl"></i>
-    <span class="text-xl font-extrabold">ES<span class="text-orange-500">FINDS</span></span>
+    <span class="text-xl font-extrabold">
+      GLOBAL<span class="text-orange-500">FINDS</span>
+    </span>
   </div>
 </nav>
 
+<!-- Main -->
 <main class="max-w-7xl mx-auto px-4 py-8">
-  <h2 class="text-xl font-black mb-6">🔥 Ofertas destacadas</h2>
-  <div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4"></div>
+  <h2 class="text-xl font-black mb-6 flex items-center gap-2">
+    🔥 Featured Amazon Deals
+  </h2>
+
+  <div id="product-grid"
+       class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-5 gap-4">
+  </div>
 </main>
 
 <script>
-/* ===== OneLink ===== */
+/* ===============================
+   Amazon OneLink (NO smid)
+================================ */
 const TRACK_ID = "site_esfinds-20";
+
 function buildLink(asin){
+  if(!asin) return "#";
   return `https://www.amazon.com/dp/${asin}?tag=${TRACK_ID}`;
 }
 
+/* ===============================
+   Utils
+================================ */
+function formatPrice(value){
+  if(value === null || value === undefined) return "";
+  return Number(value).toFixed(2);
+}
+
+/* ===============================
+   Init
+================================ */
 async function init(){
   const res = await fetch("products_data_v.json");
   const products = await res.json();
 
+  // Sort by latest update
   products.sort((a,b)=>new Date(b.updated_at)-new Date(a.updated_at));
 
   const grid = document.getElementById("product-grid");
@@ -68,31 +145,46 @@ async function init(){
 
     div.innerHTML = `
       <div class="relative bg-slate-100 aspect-square">
-        <span class="badge">-${p.discount_percent}%</span>
+        ${p.discount_percent ? `<span class="badge">-${p.discount_percent}%</span>` : ""}
         <span class="badge badge-right">Amazon</span>
-        <a href="${buildLink(p.asin)}" target="_blank">
-          <img src="${p.main_image}" class="w-full h-full object-contain p-6">
+
+        <a href="${buildLink(p.asin)}" target="_blank" rel="nofollow noopener">
+          <img src="${p.main_image}"
+               alt="${p.title}"
+               class="w-full h-full object-contain p-6">
         </a>
       </div>
 
       <div class="p-4 flex flex-col gap-2">
-        <h3 class="text-sm font-bold line-clamp-3">${p.title}</h3>
+        <h3 class="text-sm font-bold line-clamp-3">
+          ${p.title}
+        </h3>
 
         <div class="flex items-center justify-between text-xs">
-          <span class="price">${p.currency}${p.price_discount}</span>
-          <span class="line-through text-slate-400">${p.currency}${p.price_original}</span>
+          <span class="price">
+            ${p.currency}${formatPrice(p.price_discount)}
+          </span>
+          ${p.price_original ? `
+            <span class="line-through text-slate-400">
+              ${p.currency}${formatPrice(p.price_original)}
+            </span>
+          ` : ""}
         </div>
 
         <div class="text-[11px] text-slate-500">
-          ⭐ ${p.review_rating} (${p.review_count})
+          ⭐ ${p.review_rating ?? "N/A"} (${p.review_count ?? 0})
           ${p.coupon_type ? " · " + p.coupon_type : ""}
         </div>
 
-        <a href="${buildLink(p.asin)}" target="_blank" class="cta">
-          Ver oferta
+        <a href="${buildLink(p.asin)}"
+           target="_blank"
+           rel="nofollow noopener"
+           class="cta">
+          View Deal
         </a>
       </div>
     `;
+
     grid.appendChild(div);
   });
 }
