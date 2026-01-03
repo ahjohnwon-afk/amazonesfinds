@@ -120,6 +120,13 @@ const AMAZON_TAG_SUFFIX_MAP = {
   JP: "-22"
 };
 
+/* ✅ 新增：无限加载参数（不影响原逻辑） */
+const PRODUCTS_PER_BATCH = 120;   // 每次追加多少张卡（你可以调大/调小）
+let _sortedFilteredProducts = []; // 当前筛选+排序后的列表
+let _renderedCount = 0;           // 已渲染数量
+let _observer = null;             // IntersectionObserver
+let _sentinel = null;             // 触底探针
+
 /* ================= DOM ================= */
 const promoSection = document.getElementById("promo-section");
 const dealSection  = document.getElementById("deal-section");
@@ -312,14 +319,14 @@ function scoreProduct(p){
   return rating * reviews * priceFactor + Math.random()*0.15;
 }
 
-function renderProducts(){
-  const grid=document.getElementById("product-grid");
-  grid.innerHTML="";
+/* ✅ 新增：获取“筛选+排序后的全量列表”（不改变你的排序规则，只抽出来复用） */
+function getFilteredSortedList(){
   let list = currentCategory === "All"
     ? allProducts
     : allProducts.filter(p=>p.category_name === currentCategory);
 
-  list.map(p=>({...p,_s:scoreProduct(p)}))
+  return list
+    .map(p=>({...p,_s:scoreProduct(p)}))
     .sort((a,b)=>{
       // ✅ ES 商品优先展示
       const aMp = (a.marketplace || "").toUpperCase();
@@ -327,18 +334,57 @@ function renderProducts(){
       if (aMp === "ES" && bMp !== "ES") return -1;
       if (aMp !== "ES" && bMp === "ES") return 1;
       return b._s-a._s;
-    })
-    .slice(0,60)
-    .forEach(p=>{
-      const d=document.createElement("div");
-      d.className="product-card";
+    });
+}
 
-      // ✅ 货币单位：优先 currency 字段，其次按 marketplace 猜一个合理默认
-      const cur = (p.currency && String(p.currency).trim()) ? String(p.currency).trim() : (
-        (String(p.marketplace||"").toUpperCase()==="ES" || String(p.marketplace||"").toUpperCase()==="DE" || String(p.marketplace||"").toUpperCase()==="FR" || String(p.marketplace||"").toUpperCase()==="IT") ? "€" : "$"
-      );
+/* ✅ 新增：创建 / 绑定触底探针（IntersectionObserver） */
+function ensureInfiniteObserver(){
+  const grid = document.getElementById("product-grid");
 
-      d.innerHTML=`
+  if(!_sentinel){
+    _sentinel = document.createElement("div");
+    _sentinel.id = "infinite-sentinel";
+    _sentinel.className = "w-full col-span-full h-10";
+    grid.parentElement.appendChild(_sentinel);
+  }
+
+  if(_observer){
+    try{ _observer.disconnect(); }catch(e){}
+    _observer = null;
+  }
+
+  _observer = new IntersectionObserver((entries)=>{
+    const e = entries && entries[0];
+    if(!e || !e.isIntersecting) return;
+    appendNextBatch(); // ✅ 触底自动追加
+  },{
+    root: null,
+    rootMargin: "800px", // ✅ 提前加载，滚动更顺
+    threshold: 0.01
+  });
+
+  _observer.observe(_sentinel);
+}
+
+/* ✅ 新增：追加下一批商品卡 */
+function appendNextBatch(){
+  const grid=document.getElementById("product-grid");
+  if(!_sortedFilteredProducts || !_sortedFilteredProducts.length) return;
+  if(_renderedCount >= _sortedFilteredProducts.length) return;
+
+  const next = _sortedFilteredProducts.slice(_renderedCount, _renderedCount + PRODUCTS_PER_BATCH);
+  _renderedCount += next.length;
+
+  next.forEach(p=>{
+    const d=document.createElement("div");
+    d.className="product-card";
+
+    // ✅ 货币单位：优先 currency 字段，其次按 marketplace 猜一个合理默认
+    const cur = (p.currency && String(p.currency).trim()) ? String(p.currency).trim() : (
+      (String(p.marketplace||"").toUpperCase()==="ES" || String(p.marketplace||"").toUpperCase()==="DE" || String(p.marketplace||"").toUpperCase()==="FR" || String(p.marketplace||"").toUpperCase()==="IT") ? "€" : "$"
+    );
+
+    d.innerHTML=`
       <div class="relative bg-slate-100 aspect-square">
         ${p.discount_percent?`<span class="badge">-${p.discount_percent}%</span>`:""}
         <span class="badge badge-right">Amazon</span>
@@ -347,7 +393,7 @@ function renderProducts(){
         </a>
       </div>
       <div class="p-4 flex flex-col gap-2">
-        <!-- ✅ FIX：去掉 h-12，避免标题第三行被硬切 -->
+        <!-- ✅ FIX：去掉 h-12，避免标题被硬切；min-h 保持卡片高度一致 -->
         <h3 class="text-sm font-bold leading-snug line-clamp-3 min-h-[3.6em]">${p.title || ""}</h3>
 
         <div class="flex justify-between items-center mt-auto">
@@ -359,8 +405,20 @@ function renderProducts(){
         </div>
         <a href="${buildLink(p.asin)}" target="_blank" rel="noopener" class="cta text-xs">View Deal</a>
       </div>`;
-      grid.appendChild(d);
-    });
+    grid.appendChild(d);
+  });
+}
+
+/* ✅ 这里保持你原 renderProducts 名字和调用点不变，但不再 slice(0,60)，改为“初始化 + 无限追加” */
+function renderProducts(){
+  const grid=document.getElementById("product-grid");
+  grid.innerHTML="";
+
+  _sortedFilteredProducts = getFilteredSortedList();
+  _renderedCount = 0;
+
+  ensureInfiniteObserver();
+  appendNextBatch(); // 先渲染第一批
 }
 
 function renderCategorySelect(cats){
@@ -389,13 +447,14 @@ function parseAmazonRawDate(raw, type){
 
 /* ================= INIT ================= */
 async function init(){
-    try{
-      allPromosRaw = allPromosRaw.map(p=>{
+  try{
+    allPromosRaw = allPromosRaw.map(p=>{
       if(!p.category && p.raw_text){
         p.category = p.raw_text.split("\n")[0].trim();
       }
       return p;
     });
+
     // 1) fetch
     const [pRes, promoRes] = await Promise.all([fetch(PRODUCT_URL), fetch(PROMO_URL)]);
     if(!pRes.ok) throw new Error(`products fetch failed: ${pRes.status}`);
