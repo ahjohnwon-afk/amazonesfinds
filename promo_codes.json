@@ -1,0 +1,22 @@
+[
+  {
+    "brand": "OHOME",
+    "category": "Home & Kitchen",
+    "discount_percent": 50,
+    "promo_code": "LEDGKWXN",
+    "start_at": "2026-01-02T22:00:00-08:00",
+    "end_at": "2026-01-18T23:59:59-08:00",
+    "marketplace": "US",
+    "note": "While supplies last"
+  },
+  {
+    "brand": "BTFBM",
+    "category": "Clothing & Accessories",
+    "discount_percent": 40,
+    "promo_code": "40KGPNAP",
+    "start_at": "2026-01-02T22:00:00-08:00",
+    "end_at": "2026-01-06T23:59:59-08:00",
+    "marketplace": "US",
+    "note": ""
+  }
+]
